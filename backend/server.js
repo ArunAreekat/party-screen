@@ -18,6 +18,15 @@ const parties = new Map();
 
 const FIXED_CODE = process.env.PARTY_CODE || '1234';
 
+// Pre-seed the party so it always exists on startup
+parties.set(FIXED_CODE, {
+  code: FIXED_CODE,
+  members: new Map(),
+  queue: [],
+  tvSocketId: null,
+  createdAt: Date.now(),
+});
+
 function getPartyState(party) {
   return {
     code: party.code,
