@@ -1,0 +1,36 @@
+services:
+
+  # ── Backend (Socket.io + REST) ──────────────────────────────────────────────
+  - type: web
+    name: party-screen-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  # ── TV display (static React app) ──────────────────────────────────────────
+  - type: web
+    name: party-screen-tv
+    env: static
+    rootDir: tv
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Controller (static React app) ──────────────────────────────────────────
+  - type: web
+    name: party-screen-controller
+    env: static
+    rootDir: controller
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

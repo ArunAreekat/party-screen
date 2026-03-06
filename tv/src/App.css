@@ -1,0 +1,336 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  width: 100%; height: 100%;
+  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  color: #fff;
+}
+
+/* ── Animated gradient canvas ────────────────────────────────────────────────── */
+.tv-root {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    #0a0401 0%,  #1e0d05 12%,  #0c0703 25%,
+    #180b03 38%, #060402 50%,  #1c0e06 62%,
+    #0a0602 75%, #160905 88%,  #0a0401 100%
+  );
+  background-size: 400% 400%;
+  animation: bg-drift 28s ease-in-out infinite;
+}
+
+@keyframes bg-drift {
+  0%   { background-position: 0%   0%;   }
+  25%  { background-position: 100% 20%;  }
+  50%  { background-position: 80%  100%; }
+  75%  { background-position: 20%  80%;  }
+  100% { background-position: 0%   0%;   }
+}
+
+/* ── Brand top-left ──────────────────────────────────────────────────────────── */
+.tv-brand {
+  position: absolute;
+  top: 2.2rem; left: 2.8rem;
+  font-size: 1.15rem; font-weight: 700;
+  letter-spacing: -0.015em;
+  color: rgba(255,255,255,0.88);
+  z-index: 10;
+}
+
+/* ── Top-right cluster: code + gear ─────────────────────────────────────────── */
+.tv-top-right {
+  position: absolute;
+  top: 2rem; right: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  z-index: 50;
+}
+
+.tv-code {
+  font-size: 1.1rem; font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.48);
+  font-variant-numeric: tabular-nums;
+}
+
+.tv-settings-btn {
+  width: 2.25rem; height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: rgba(255,255,255,0.65);
+  transition: background 0.18s, color 0.18s;
+}
+.tv-settings-btn:hover,
+.tv-settings-btn--active {
+  background: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.95);
+}
+
+/* ── Settings panel ──────────────────────────────────────────────────────────── */
+.settings-panel {
+  position: absolute;
+  top: 5rem; right: 2.4rem;
+  width: 300px;
+  border-radius: 1.8rem;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(60px) saturate(1.8);
+  -webkit-backdrop-filter: blur(60px) saturate(1.8);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    0 1.5px 0 rgba(255,255,255,0.18) inset,
+    0 30px 80px rgba(0,0,0,0.55);
+  z-index: 60;
+  overflow: hidden;
+  animation: panel-in 0.28s cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  transform-origin: top right;
+}
+
+@keyframes panel-in {
+  from { transform: scale(0.78) translateY(-8px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+.settings-header {
+  padding: 1rem 1.3rem 0.55rem;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+}
+
+.settings-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 1.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  text-align: left;
+  transition: background 0.15s;
+}
+.settings-row:hover    { background: rgba(255,255,255,0.06); }
+.settings-row--on      { background: rgba(255,255,255,0.04); }
+
+.settings-row-icon {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 44px;
+}
+
+.settings-row-body { flex: 1; }
+
+.settings-row-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+.settings-row-desc {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.38);
+  margin-top: 0.15rem;
+}
+
+.settings-sep {
+  height: 0.5px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 1.3rem;
+}
+
+/* ── Stage ───────────────────────────────────────────────────────────────────── */
+.tv-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.tv-stage--seq {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Glass wrap (flash mode: card + name) ───────────────────────────────────── */
+.glass-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  animation: glass-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Liquid glass card ───────────────────────────────────────────────────────── */
+.glass-card {
+  width: clamp(300px, 38vw, 500px);
+  aspect-ratio: 1 / 1;
+  border-radius: 2.8rem;
+  background: rgba(255,255,255,0.055);
+  backdrop-filter: blur(60px) saturate(1.5);
+  -webkit-backdrop-filter: blur(60px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.11);
+  box-shadow:
+    0 1.5px 0 rgba(255,255,255,0.18) inset,
+    0 -1px  0 rgba(0,0,0,0.2) inset,
+    0 60px 120px -10px rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glass-card--idle { opacity: 0.35; }
+
+.glass-card--gif {
+  aspect-ratio: auto;
+  width: clamp(320px, 52vw, 700px);
+  padding: 1.4rem;
+}
+
+.seq-gif-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+@keyframes glass-pop {
+  from { transform: scale(0.82); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* ── Card content ────────────────────────────────────────────────────────────── */
+.glass-emoji {
+  font-size: clamp(9rem, 22vw, 16rem);
+  line-height: 1;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.4));
+}
+
+.glass-text {
+  font-size: clamp(2rem, 6vw, 5.5rem);
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  text-align: center;
+  line-height: 1.2;
+  padding: 1.5rem 2rem;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.glass-gif {
+  width: 100%;
+  max-height: 55vh;
+  border-radius: 1.6rem;
+  object-fit: contain;
+}
+
+/* seq gif fills the square card */
+.seq-gif-card .glass-gif {
+  max-height: 100%;
+  height: 100%;
+  border-radius: 2.6rem;
+  object-fit: cover;
+}
+
+/* ── Sender name (outside card, below) ───────────────────────────────────────── */
+.glass-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.02em;
+}
+
+/* ── Sequence carousel ───────────────────────────────────────────────────────── */
+.seq-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seq-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  transform:
+    translateX(calc(var(--off) * 44vw))
+    scale(calc(1 - var(--abs) * 0.2));
+  opacity: calc(1 - var(--abs) * 0.42);
+  z-index: calc(10 - var(--abs) * 3);
+  transition:
+    transform 0.72s cubic-bezier(0.34, 1.2, 0.64, 1),
+    opacity   0.5s  ease;
+}
+
+/* ── Ticker ──────────────────────────────────────────────────────────────────── */
+.ticker {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 2.6rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent 0%, rgba(0,0,0,0.5) 8%, black 16%,
+    black 84%, rgba(0,0,0,0.5) 92%, transparent 100%);
+  mask-image: linear-gradient(to right,
+    transparent 0%, rgba(0,0,0,0.5) 8%, black 16%,
+    black 84%, rgba(0,0,0,0.5) 92%, transparent 100%);
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: ticker-scroll 45s linear infinite;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 1.6rem;
+  flex-shrink: 0;
+}
+
+.ticker-name { font-size: 0.84rem; font-weight: 600; color: rgba(255,255,255,0.55); }
+.ticker-sep  { font-size: 0.75rem; color: rgba(255,255,255,0.2); }
+.ticker-msg  { font-size: 0.84rem; font-weight: 400; color: rgba(255,255,255,0.35); }
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── Splash ──────────────────────────────────────────────────────────────────── */
+.tv-splash {
+  width: 100vw; height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-weight: 500;
+  color: rgba(255,255,255,0.35);
+  background: #060402;
+}
+.tv-splash.error { color: #FF453A; }

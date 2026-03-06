@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["backend/dev.sh"],
+      "port": 4000
+    },
+    {
+      "name": "tv",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["tv/dev.sh"],
+      "port": 3000
+    },
+    {
+      "name": "controller",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["controller/dev.sh"],
+      "port": 3001
+    }
+  ]
+}
