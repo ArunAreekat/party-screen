@@ -16,9 +16,7 @@ const io = new Server(httpServer, {
 const parties = new Map();
 // parties[code] = { code, host, members: Map<socketId, {name}>, queue: [], tvSocketId }
 
-function generateCode() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
+const FIXED_CODE = process.env.PARTY_CODE || '1234';
 
 function getPartyState(party) {
   return {
@@ -29,11 +27,11 @@ function getPartyState(party) {
   };
 }
 
-// REST: create party
+// REST: create party (always returns the fixed code)
 app.post('/party/create', (req, res) => {
-  let code;
-  do { code = generateCode(); } while (parties.has(code));
+  const code = FIXED_CODE;
 
+  // Reset party state (new TV session)
   const party = {
     code,
     members: new Map(),
@@ -133,16 +131,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Cleanup stale parties every 2 hours
-setInterval(() => {
-  const cutoff = Date.now() - 2 * 60 * 60 * 1000;
-  for (const [code, party] of parties) {
-    if (party.createdAt < cutoff && party.members.size === 0) {
-      parties.delete(code);
-      console.log(`Cleaned up stale party ${code}`);
-    }
-  }
-}, 30 * 60 * 1000);
 
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => console.log(`Party server running on port ${PORT}`));
