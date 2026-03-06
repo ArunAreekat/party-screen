@@ -75,9 +75,29 @@ export default function App() {
   const [showCodeChange, setShowCodeChange] = useState(false);
   const [chatOpen,       setChatOpen]       = useState(false);
   const [chatClosing,    setChatClosing]    = useState(false);
+  const [activeMsg,      setActiveMsg]      = useState(null);
   const socketRef      = useRef(null);
   const messagesEndRef = useRef(null);
   const guestNameRef   = useRef('');
+  const queueRef       = useRef([]);
+  const displayTimerRef = useRef(null);
+
+  function getMsgDuration(msg) {
+    if (msg.type === 'gif') return 5000;
+    if (msg.type === 'sticker') return 3000;
+    return msg.content.length > 60 ? 5000 : 3500;
+  }
+
+  function scheduleNext(delay) {
+    displayTimerRef.current = setTimeout(() => {
+      displayTimerRef.current = null;
+      if (queueRef.current.length === 0) { setActiveMsg(null); return; }
+      const msg = queueRef.current.shift();
+      queueRef.current.push(msg);
+      setActiveMsg({ ...msg, key: `a${Date.now()}` });
+      scheduleNext(getMsgDuration(msg));
+    }, delay);
+  }
 
   function tryLoad() {
     try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; }
@@ -152,7 +172,11 @@ export default function App() {
     });
 
     socket.on('party:message', (msg) => {
-      setMessages(prev => [...prev, { ...msg, fromMe: msg.sender === guestNameRef.current }]);
+      const m = { ...msg, fromMe: msg.sender === guestNameRef.current };
+      setMessages(prev => [...prev, m]);
+      queueRef.current.push(m);
+      if (queueRef.current.length > 10) queueRef.current.shift();
+      if (!displayTimerRef.current) scheduleNext(0);
     });
 
     socket.on('error', (err) => { setJoinError(err); setJoining(false); socket.disconnect(); });
@@ -182,7 +206,10 @@ export default function App() {
     doJoin(newCode, session.name);
   }
 
-  useEffect(() => () => socketRef.current?.disconnect(), []);
+  useEffect(() => () => {
+    clearTimeout(displayTimerRef.current);
+    socketRef.current?.disconnect();
+  }, []);
 
   // ── Join screen ─────────────────────────────────────────────────────────────
   if (screen === 'join') {
@@ -233,7 +260,6 @@ export default function App() {
 
   // ── Party screen (default after join) ────────────────────────────────────────
   const userMessages = messages.filter(m => m.type !== 'system');
-  const latestMsg    = userMessages[userMessages.length - 1] || null;
 
   return (
     <div className="ios-root" style={{ height: '100dvh', overflow: 'hidden' }}>
@@ -248,19 +274,19 @@ export default function App() {
           </div>
         </div>
 
-        {/* Center: latest message card */}
+        {/* Center: synced active message (same timing as TV) */}
         <div className="party-view-center">
-          {latestMsg ? (
-            <div className="party-glass-wrap" key={latestMsg.id}>
+          {activeMsg ? (
+            <div className="party-glass-wrap" key={activeMsg.key}>
               <div className="party-glass-card">
-                {latestMsg.type === 'gif'
-                  ? <img className="party-glass-gif" src={latestMsg.content} alt="GIF" />
-                  : latestMsg.type === 'sticker'
-                  ? <div className="party-glass-emoji">{latestMsg.content}</div>
-                  : <div className="party-glass-text">{latestMsg.content}</div>
+                {activeMsg.type === 'gif'
+                  ? <img className="party-glass-gif" src={activeMsg.content} alt="GIF" />
+                  : activeMsg.type === 'sticker'
+                  ? <div className="party-glass-emoji">{activeMsg.content}</div>
+                  : <div className="party-glass-text">{activeMsg.content}</div>
                 }
               </div>
-              <div className="party-glass-name">{latestMsg.sender}</div>
+              <div className="party-glass-name">{activeMsg.sender}</div>
             </div>
           ) : (
             <div className="party-empty-state">
