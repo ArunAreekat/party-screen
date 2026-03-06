@@ -27,14 +27,13 @@ function avatarColor(name = '') {
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 const IconMessage = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+  <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
     <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
   </svg>
 );
 const IconSticker = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 13h-2v-6h2v6zm0-8h-2V5h2v2z" style={{display:'none'}}/>
   </svg>
 );
 const IconSmile = () => (
@@ -56,6 +55,11 @@ const IconSwitch = () => (
     <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
   </svg>
 );
+const IconClose = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+  </svg>
+);
 
 // ── App ──────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -69,6 +73,8 @@ export default function App() {
   const [draft,          setDraft]          = useState('');
   const [tab,            setTab]            = useState('text');
   const [showCodeChange, setShowCodeChange] = useState(false);
+  const [chatOpen,       setChatOpen]       = useState(false);
+  const [chatClosing,    setChatClosing]    = useState(false);
   const socketRef      = useRef(null);
   const messagesEndRef = useRef(null);
   const guestNameRef   = useRef('');
@@ -83,8 +89,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (chatOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, chatOpen]);
+
+  function openChat() {
+    setChatClosing(false);
+    setChatOpen(true);
+  }
+
+  function closeChat() {
+    setChatClosing(true);
+    setTimeout(() => { setChatOpen(false); setChatClosing(false); }, 300);
+  }
 
   async function handleJoin(e) {
     e.preventDefault();
@@ -120,7 +136,7 @@ export default function App() {
     socket.on('guest:joined', (state) => {
       localStorage.setItem(SESSION_KEY, JSON.stringify({ code, name: guestName }));
       setSession({ code, name: guestName, memberCount: state.memberCount });
-      setScreen('chat');
+      setScreen('party');
       setJoining(false);
       addSystemMsg('You joined the party 🎉');
     });
@@ -215,24 +231,56 @@ export default function App() {
     );
   }
 
-  // ── Chat screen ─────────────────────────────────────────────────────────────
+  // ── Party screen (default after join) ────────────────────────────────────────
+  const userMessages = messages.filter(m => m.type !== 'system');
+  const latestMsg    = userMessages[userMessages.length - 1] || null;
+
   return (
-    <div className="ios-root ios-chat-root">
-      {/* Navigation bar */}
-      <nav className="ios-navbar">
-        <button className="ios-navbar-left ios-switch-btn" onClick={() => setShowCodeChange(true)}>
-          <IconSwitch />
-        </button>
-        <div className="ios-navbar-center">
-          <div className="ios-navbar-title">Party {session.code}</div>
-          <div className="ios-navbar-sub">
-            {session.memberCount > 0 ? `${session.memberCount} people` : 'Just you'}
+    <div className="ios-root" style={{ height: '100dvh', overflow: 'hidden' }}>
+
+      {/* ── Party Screen View ── */}
+      <div className="party-view">
+        {/* Top-right: code + members */}
+        <div className="party-view-top">
+          <div className="party-view-code">{session.code}</div>
+          <div className="party-view-members">
+            {session.memberCount > 1 ? `${session.memberCount} people` : 'Just you'}
           </div>
         </div>
-        <div className="ios-navbar-right ios-you-badge">@{session.name}</div>
-      </nav>
 
-      {/* Switch party sheet */}
+        {/* Center: latest message card */}
+        <div className="party-view-center">
+          {latestMsg ? (
+            <div className="party-glass-wrap" key={latestMsg.id}>
+              <div className="party-glass-card">
+                {latestMsg.type === 'gif'
+                  ? <img className="party-glass-gif" src={latestMsg.content} alt="GIF" />
+                  : latestMsg.type === 'sticker'
+                  ? <div className="party-glass-emoji">{latestMsg.content}</div>
+                  : <div className="party-glass-text">{latestMsg.content}</div>
+                }
+              </div>
+              <div className="party-glass-name">{latestMsg.sender}</div>
+            </div>
+          ) : (
+            <div className="party-empty-state">
+              <div className="party-empty-emoji">📺</div>
+              <div className="party-empty-text">Party Screen</div>
+              <div className="party-empty-sub">Tap the button below to send a message</div>
+            </div>
+          )}
+        </div>
+
+        {/* Chat FAB */}
+        <button className="party-chat-fab" onClick={openChat} aria-label="Open chat">
+          <IconMessage />
+          {userMessages.length > 0 && (
+            <span className="party-fab-badge">{userMessages.length > 99 ? '99+' : userMessages.length}</span>
+          )}
+        </button>
+      </div>
+
+      {/* ── Code change sheet (above party view) ── */}
       {showCodeChange && (
         <CodeChangeSheet
           onSwitch={handleCodeChange}
@@ -240,69 +288,94 @@ export default function App() {
         />
       )}
 
-      {/* Messages */}
-      <div className="ios-messages">
-        {messages.length === 0 && (
-          <div className="ios-empty-chat">
-            <div className="ios-empty-icon">📺</div>
-            <div className="ios-empty-text">Say something</div>
-            <div className="ios-empty-sub">Your messages will appear on the TV</div>
-          </div>
-        )}
-        {messages.map((m, i) =>
-          m.type === 'system'
-            ? <div key={m.id || i} className="ios-system-msg">{m.content}</div>
-            : <ChatMessage key={m.id || i} msg={m} />
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+      {/* ── Chat Sheet overlay ── */}
+      {chatOpen && (
+        <div className={`chat-sheet ${chatClosing ? 'chat-sheet-closing' : ''}`}>
+          <div className="chat-sheet-inner">
 
-      {/* Bottom dock: panel + tab bar */}
-      <div className="ios-dock">
-        {tab === 'text' && (
-          <div className="ios-text-panel">
-            <div className="ios-quick-row">
-              {['🎉','🔥','😂','❤️','👏','🙌','🥳','😍','💯','👀'].map(e => (
-                <button key={e} className="ios-quick-btn" onClick={() => sendMessage(e)}>{e}</button>
-              ))}
-            </div>
-            <div className="ios-input-row">
-              <textarea
-                className="ios-input"
-                placeholder="iMessage"
-                value={draft}
-                onChange={e => setDraft(e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={1}
-                maxLength={200}
-              />
-              <button className="ios-send-btn" onClick={() => sendMessage(draft)} disabled={!draft.trim()}>
-                <IconArrowUp />
+            {/* Navbar */}
+            <nav className="ios-navbar">
+              <button className="ios-navbar-left ios-switch-btn" onClick={() => setShowCodeChange(true)}>
+                <IconSwitch />
               </button>
-            </div>
-          </div>
-        )}
-        {tab === 'gif'     && <GifPanel     onSend={(url)   => { sendMessage(url, 'gif');     setTab('text'); }} />}
-        {tab === 'sticker' && <StickerPanel onSend={(emoji) => { sendMessage(emoji, 'sticker'); setTab('text'); }} />}
+              <div className="ios-navbar-center">
+                <div className="ios-navbar-title">Party {session.code}</div>
+                <div className="ios-navbar-sub">
+                  {session.memberCount > 0 ? `${session.memberCount} people` : 'Just you'}
+                </div>
+              </div>
+              <button className="ios-navbar-right chat-close-btn" onClick={closeChat} aria-label="Close chat">
+                <IconClose />
+              </button>
+            </nav>
 
-        {/* Tab bar */}
-        <div className="ios-tabbar">
-          {[
-            { id: 'text',    icon: <IconMessage />, label: 'Message' },
-            { id: 'gif',     icon: <span className="gif-badge-icon">GIF</span>, label: 'GIF' },
-            { id: 'sticker', icon: <IconSmile />,   label: 'Sticker' },
-          ].map(t => (
-            <button
-              key={t.id}
-              className={`ios-tab ${tab === t.id ? 'active' : ''}`}
-              onClick={() => setTab(t.id)}
-            >
-              <span className="ios-tab-icon">{t.icon}</span>
-              <span className="ios-tab-label">{t.label}</span>
-            </button>
-          ))}
+            {/* Messages */}
+            <div className="ios-messages">
+              {messages.length === 0 && (
+                <div className="ios-empty-chat">
+                  <div className="ios-empty-icon">📺</div>
+                  <div className="ios-empty-text">Say something</div>
+                  <div className="ios-empty-sub">Your messages will appear on the TV</div>
+                </div>
+              )}
+              {messages.map((m, i) =>
+                m.type === 'system'
+                  ? <div key={m.id || i} className="ios-system-msg">{m.content}</div>
+                  : <ChatMessage key={m.id || i} msg={m} />
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Bottom dock */}
+            <div className="ios-dock">
+              {tab === 'text' && (
+                <div className="ios-text-panel">
+                  <div className="ios-quick-row">
+                    {['🎉','🔥','😂','❤️','👏','🙌','🥳','😍','💯','👀'].map(e => (
+                      <button key={e} className="ios-quick-btn" onClick={() => sendMessage(e)}>{e}</button>
+                    ))}
+                  </div>
+                  <div className="ios-input-row">
+                    <textarea
+                      className="ios-input"
+                      placeholder="iMessage"
+                      value={draft}
+                      onChange={e => setDraft(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      rows={1}
+                      maxLength={200}
+                    />
+                    <button className="ios-send-btn" onClick={() => sendMessage(draft)} disabled={!draft.trim()}>
+                      <IconArrowUp />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {tab === 'gif'     && <GifPanel     onSend={(url)   => { sendMessage(url, 'gif');     setTab('text'); }} />}
+              {tab === 'sticker' && <StickerPanel onSend={(emoji) => { sendMessage(emoji, 'sticker'); setTab('text'); }} />}
+
+              {/* Tab bar */}
+              <div className="ios-tabbar">
+                {[
+                  { id: 'text',    icon: <IconMessage />, label: 'Message' },
+                  { id: 'gif',     icon: <span className="gif-badge-icon">GIF</span>, label: 'GIF' },
+                  { id: 'sticker', icon: <IconSmile />,   label: 'Sticker' },
+                ].map(t => (
+                  <button
+                    key={t.id}
+                    className={`ios-tab ${tab === t.id ? 'active' : ''}`}
+                    onClick={() => setTab(t.id)}
+                  >
+                    <span className="ios-tab-icon">{t.icon}</span>
+                    <span className="ios-tab-label">{t.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
