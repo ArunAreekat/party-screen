@@ -209,8 +209,10 @@ html, body, #root {
 .ios-navbar-left {
   position: absolute;
   left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
+  top: var(--sat);
+  bottom: 0;
+  display: flex;
+  align-items: center;
 }
 
 .ios-switch-btn {
@@ -229,8 +231,10 @@ html, body, #root {
 .ios-navbar-right {
   position: absolute;
   right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
+  top: var(--sat);
+  bottom: 0;
+  display: flex;
+  align-items: center;
 }
 
 .ios-you-badge {
@@ -1022,8 +1026,8 @@ html, body, #root {
 
 /* Close button */
 .chat-close-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
   background: var(--ios-fill2);
   border: none;
