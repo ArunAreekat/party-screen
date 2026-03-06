@@ -93,6 +93,10 @@ export default function App() {
     const socket = io(BACKEND);
     socketRef.current = socket;
     socket.on('connect', () => socket.emit('tv:join', { code }));
+    // If backend restarted with a new party, reload to re-create
+    socket.on('error', (err) => {
+      if (err === 'Party not found') window.location.reload();
+    });
     socket.on('party:message', (msg) => {
       const m = { ...msg, key: `k${++_key}` };
       setTickerMsgs(prev => [...prev.slice(-50), m]);
